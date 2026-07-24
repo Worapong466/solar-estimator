@@ -8,8 +8,12 @@ async function post(payload: Record<string, unknown>): Promise<void> {
     return;
   }
   // ใช้ text/plain เพื่อเลี่ยง CORS preflight ที่ Google Apps Script Web App ไม่รองรับ
+  // ใช้ mode: "no-cors" เพราะ Apps Script ตอบกลับผ่าน redirect ไป script.googleusercontent.com
+  // ซึ่ง browser มักอ่าน response ตรงนั้นไม่ได้ (fetch จะ reject ทั้งที่ server บันทึกข้อมูลสำเร็จแล้วจริง)
+  // เราไม่ได้ใช้ค่าใน response อยู่แล้ว จึงไม่จำเป็นต้องอ่านมันกลับมา
   await fetch(WEB_APP_URL, {
     method: "POST",
+    mode: "no-cors",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload),
   });

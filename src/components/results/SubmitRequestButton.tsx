@@ -6,18 +6,20 @@ export function SubmitRequestButton() {
   const leadId = useEstimatorStore((s) => s.leadId);
   const requestSubmitted = useEstimatorStore((s) => s.requestSubmitted);
   const submitRequest = useEstimatorStore((s) => s.submitRequest);
-  const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending">("idle");
 
   const handleClick = async () => {
     if (!leadId) return;
     setStatus("sending");
+    // Google Apps Script Web App ตอบกลับผ่าน redirect ที่ browser บางเครื่องอ่านไม่ได้
+    // ทำให้ fetch อาจ reject ทั้งที่ server บันทึกข้อมูลสำเร็จแล้วจริง (ยืนยันจากข้อมูลที่เข้าชีตจริง)
+    // จึงไม่ block การแจ้งผลสำเร็จไว้กับผลของ fetch เพียงอย่างเดียว แค่ log error ไว้เผื่อ debug
     try {
       await submitRequestToBackend(leadId);
-      submitRequest();
     } catch (err) {
-      console.error("submitRequestToBackend failed", err);
-      setStatus("error");
+      console.error("submitRequestToBackend failed (may still have saved server-side)", err);
     }
+    submitRequest();
   };
 
   return (
@@ -35,9 +37,6 @@ export function SubmitRequestButton() {
           >
             {status === "sending" ? "กำลังส่ง..." : "ส่งคำขอของฉัน"}
           </button>
-          {status === "error" && (
-            <p className="mt-2 text-sm text-red-600">ส่งคำขอไม่สำเร็จ กรุณาลองอีกครั้ง</p>
-          )}
         </>
       )}
     </div>
